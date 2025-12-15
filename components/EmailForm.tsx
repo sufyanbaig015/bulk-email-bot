@@ -17,6 +17,8 @@ export default function EmailForm() {
     setLoading(true);
     setResult(null);
 
+
+    
     try {
       const response = await fetch('/api/email/send', {
         method: 'POST',
