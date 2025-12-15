@@ -7,7 +7,6 @@ export default function EmailForm() {
     to: '',
     subject: '',
     message: '',
-    text: '',
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -29,7 +28,6 @@ export default function EmailForm() {
           to: formData.to,
           subject: formData.subject,
           html: formData.message,
-          text: formData.text || undefined,
         }),
       });
 
@@ -44,7 +42,6 @@ export default function EmailForm() {
           to: '',
           subject: '',
           message: '',
-          text: '',
         });
       } else {
         setResult({
@@ -106,20 +103,6 @@ export default function EmailForm() {
           onChange={(e) => setFormData({ ...formData, message: e.target.value })}
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Type your email content here..."
-        />
-      </div>
-
-      <div>
-        <label htmlFor="text" className="block text-sm font-medium text-gray-700 mb-2">
-          Plain Text Content (optional)
-        </label>
-        <textarea
-          id="text"
-          rows={6}
-          value={formData.text}
-          onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Plain text version of your email"
         />
       </div>
 
