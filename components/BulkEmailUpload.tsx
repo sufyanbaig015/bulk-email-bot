@@ -15,13 +15,60 @@ export default function BulkEmailUpload() {
     failed?: number;
     results?: Array<{ email: string; success: boolean; error?: string }>;
   } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiGenerator, setShowAiGenerator] = useState(false);
+  const [campaignDescription, setCampaignDescription] = useState('');
+  const [csvColumns, setCsvColumns] = useState<string[]>([]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setCsvFile(file);
+      // Parse CSV to extract column names
+      try {
+        const text = await file.text();
+        const firstLine = text.split('\n')[0];
+        const columns = firstLine.split(',').map((col) => col.trim().replace(/"/g, ''));
+        setCsvColumns(columns);
+      } catch (error) {
+        console.error('Failed to parse CSV:', error);
+        setCsvColumns(['email', 'name']);
+      }
     } else {
       alert('Please select a valid CSV file');
+    }
+  };
+
+  const handleGenerateTemplate = async () => {
+    if (!campaignDescription.trim()) {
+      alert('Please enter a campaign description');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await fetch('/api/ai/template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignDescription,
+          csvColumns: csvColumns.length > 0 ? csvColumns : ['email', 'name'],
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.template) {
+        setSubject(data.template.subject || '');
+        setHtmlTemplate(data.template.html || '');
+        setCampaignDescription('');
+        setShowAiGenerator(false);
+      } else {
+        alert(data.error || 'Failed to generate template');
+      }
+    } catch (error: any) {
+      alert(error.message || 'An error occurred');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -77,6 +124,56 @@ export default function BulkEmailUpload() {
 
   return (
     <div className="space-y-6">
+      {/* AI Template Generator */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✨</span>
+            <h3 className="font-semibold text-gray-900">AI Template Generator</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAiGenerator(!showAiGenerator)}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            {showAiGenerator ? 'Hide' : 'Show'} Generator
+          </button>
+        </div>
+
+        {showAiGenerator && (
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Campaign Description
+              </label>
+              <textarea
+                value={campaignDescription}
+                onChange={(e) => setCampaignDescription(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g., Welcome email for new customers joining our premium service..."
+              />
+            </div>
+            {csvColumns.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-md p-3">
+                <p className="text-sm font-medium text-gray-700 mb-1">Detected CSV Columns:</p>
+                <p className="text-xs text-gray-600">
+                  {csvColumns.join(', ')} (will be used as placeholders)
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleGenerateTemplate}
+              disabled={aiLoading || !campaignDescription.trim()}
+              className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {aiLoading ? 'Generating Template...' : '✨ Generate Template'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <h3 className="font-semibold text-blue-900 mb-2">CSV Format Instructions</h3>
         <p className="text-sm text-blue-800 mb-2">

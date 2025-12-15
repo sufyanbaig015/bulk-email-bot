@@ -5,6 +5,7 @@ import ConnectionStatus from '@/components/ConnectionStatus';
 import EmailForm from '@/components/EmailForm';
 import BulkEmailUpload from '@/components/BulkEmailUpload';
 import EmailLogs from '@/components/EmailLogs';
+import ChatWidget from '@/components/ChatWidget';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'single' | 'bulk' | 'logs'>('single');
@@ -115,7 +116,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      
+      {/* AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }
